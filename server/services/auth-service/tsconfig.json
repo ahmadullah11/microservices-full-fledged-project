@@ -41,6 +41,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "src/schema", "src/config"],
+  "exclude": ["node_modules", "drizzle.config.ts"]
 }
