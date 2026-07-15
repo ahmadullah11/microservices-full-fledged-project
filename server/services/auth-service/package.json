@@ -25,11 +25,14 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@types/http-status-codes": "^1.2.0",
     "argon2": "^0.44.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "pg": "^8.22.0"
+    "http-status-codes": "^2.3.0",
+    "pg": "^8.22.0",
+    "zod": "^4.4.3"
   }
 }
