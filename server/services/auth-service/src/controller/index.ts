@@ -9,18 +9,15 @@ import argon2 from 'argon2';
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js';
 import type { StringValue } from 'ms';
+import { email } from 'zod';
+import { validation } from '../utils/validation.js';
+import { findEmail } from '../repository/index.js';
 
 const signUpController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schema = SignUpSchema.safeParse(req.body);
+    const { name, email, password } = validation(SignUpSchema, req.body)
 
-    if (!schema.success) {
-      throw new AppError(schema.error.message, StatusCodes.BAD_REQUEST);
-    }
-
-    const { name, email, password } = schema.data;
-
-    const userExists = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    const userExists = findEmail(email)
 
     if (userExists) {
       throw new AppError('User Already Exists', StatusCodes.CONFLICT);
@@ -71,15 +68,9 @@ const signUpController = async (req: Request, res: Response, next: NextFunction)
 
 const loginController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const schema = LoginSchema.safeParse(req.body);
+    const { email, password } = await validation(LoginSchema, req.body);
 
-    if (!schema.success) {
-      throw new AppError(schema.error.message, StatusCodes.BAD_REQUEST);
-    }
-
-    const { email, password } = schema.data;
-
-    const [userExists] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    const [userExists] = await findEmail(email)
 
     if (!userExists) {
       throw new AppError('Invalid Credentials', StatusCodes.UNAUTHORIZED);
