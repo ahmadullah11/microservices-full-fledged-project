@@ -1,12 +1,15 @@
-import { StatusCodes } from "http-status-codes";
-import { AppError } from "../error/AppError.js";
+import { StatusCodes } from 'http-status-codes';
+import { AppError } from '../errors/AppError.js';
+
+// Generics
+// Utility Types
 
 export const validation = (validationSchema: any, data: any) => {
-  const result = validationSchema.safeParse(data);
+  const schema = validationSchema.safeParse(data);
 
-  if (!result.success) {
-    throw new AppError(result.error.message, StatusCodes.BAD_REQUEST);
+  if (!schema.success) {
+    throw new AppError(schema.error.message, StatusCodes.BAD_REQUEST);
   }
 
-  return result.data;
+  return schema.data;
 };

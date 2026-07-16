@@ -42,9 +42,6 @@ export const signUpService = async (name: string, email: string, password: strin
   };
 };
 
-// +++++++++++++++++++++++++++++++++---------  (loginService) 
-
-
 export const loginService = async (email: string, password: string) => {
   const [userExists] = await findEmail(email);
 

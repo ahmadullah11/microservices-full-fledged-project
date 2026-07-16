@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/index.js';
-// import { errorHandler } from './middleware/index.js';
+import { errorHandler } from './middleware/index.js';
 
 const app = express();
 
@@ -17,4 +17,4 @@ app.use('/api/auth', authRoutes);
 
 export default app;
 
-// app.use(errorHandler);
+app.use(errorHandler);

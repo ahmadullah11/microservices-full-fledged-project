@@ -1,24 +1,68 @@
 services:
-  database_postgres:    
+  database_postgres:
     image: postgres:17
+    container_name: database_postgres
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: auth_db
     volumes:
-      - ${HOME}/postgres-data/:/var/lib/postgresql/data    
+      - ${HOME}/postgres-data/:/var/lib/postgresql/data
+    restart: unless-stopped
 
   pgweb:
     container_name: pgweb
     restart: always
     image: sosedoff/pgweb
     ports:
-      - 8081:8081
-    links:
-      - database_postgres:database_postgres
+      - "8081:8081"
     environment:
-      - PGWEB_DATABASE_URL=postgres://postgres:postgres@database_postgres:5432/auth_db?sslmode=disable
+      PGWEB_DATABASE_URL: postgres://postgres:postgres@database_postgres:5432/auth_db?sslmode=disable
     depends_on:
       - database_postgres
+
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ../services/auth-service
+      dockerfile: Dockerfile
+
+    ports:
+      - "5000:5000"
+
+    environment:
+      NODE_ENV: production
+
+      PORT: 5000
+
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/auth_db?sslmode=disable
+
+      JWT_SECRET: 6J0?Z@u>Kbz^Yi^j$MLchT]taQ,tAuxRA@Vde6^*KN}e8KY*0ye.xAq,3@bcWh@k1ey0oJfo>%!V]JVJs+Yj#X
+
+      JWT_EXPIRES: 7d
+
+    depends_on:
+      - database_postgres
+
+    restart: unless-stopped
+
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:latest
+    container_name: arcane
+    ports:
+      - "3552:3552"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+    environment:
+      - APP_URL=http://localhost:3552
+      - PUID=1000
+      - PGID=1000
+      - ENCRYPTION_KEY=afb41163-f2e7-4104-8249-8fb5c2f9d584
+      - JWT_SECRET=afb41163-f2e7-4104-8249-8fb5c2f9d584
+    restart: unless-stopped
+
+volumes:
+  arcane-data:
