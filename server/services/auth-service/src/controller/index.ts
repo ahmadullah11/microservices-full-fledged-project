@@ -12,6 +12,7 @@ import type { StringValue } from 'ms';
 import { email } from 'zod';
 import { validation } from '../utils/validation.js';
 import { findEmail } from '../repository/index.js';
+import { hashPassword, verifyPassword } from '../utils/password-helper.js';
 
 const signUpController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -23,7 +24,7 @@ const signUpController = async (req: Request, res: Response, next: NextFunction)
       throw new AppError('User Already Exists', StatusCodes.CONFLICT);
     }
 
-    const hashedPassword = await argon2.hash(password);
+    const hashedPassword = await hashPassword(password)
 
     const user: typeof usersTable.$inferInsert = {
       name,
@@ -76,7 +77,7 @@ const loginController = async (req: Request, res: Response, next: NextFunction) 
       throw new AppError('Invalid Credentials', StatusCodes.UNAUTHORIZED);
     }
 
-    const isPasswordCompared = await argon2.verify(userExists.password, password);
+    const isPasswordCompared = await verifyPassword(userExists.password)
 
     if (!isPasswordCompared) {
       throw new AppError('Invalid Credentials', StatusCodes.UNAUTHORIZED);
