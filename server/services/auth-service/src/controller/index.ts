@@ -1,65 +1,22 @@
 import type { NextFunction, Request, Response } from 'express';
-import { LoginSchema, SignUpSchema } from '../validation/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { AppError } from '../error/AppError.js';
-import { db } from '../config/db.js';
-import { usersTable } from '../schema/index.js';
-import { eq } from 'drizzle-orm';
-import argon2 from 'argon2';
-import jwt from 'jsonwebtoken'
-import { env } from '../config/env.js';
-import type { StringValue } from 'ms';
-import { email } from 'zod';
+import { loginService, signUpService } from '../services/index.js';
 import { validation } from '../utils/validation.js';
-import { findEmail } from '../repository/index.js';
-import { hashPassword, verifyPassword } from '../utils/password-helper.js';
+import { LoginSchema, SignUpSchema } from '../validation/index.js';
 
-const signUpController = async (req: Request, res: Response, next: NextFunction) => {
+export const signUpController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password } = validation(SignUpSchema, req.body)
+    const { name, email, password } = await validation(SignUpSchema, req.body);
 
-    const userExists = findEmail(email)
-
-    if (userExists) {
-      throw new AppError('User Already Exists', StatusCodes.CONFLICT);
-    }
-
-    const hashedPassword = await hashPassword(password)
-
-    const user: typeof usersTable.$inferInsert = {
-      name,
-      email,
-      password: hashedPassword,
-    };
-
-    const [newUser] = await db.insert(usersTable).values(user).returning({
-      id: usersTable.id,
-      name: usersTable.id,
-      email: usersTable.email,
-    });
-
-    // Access Tokens
-    // Refresh Tokens
-
-    const token = jwt.sign(
-      {
-        id: newUser?.id, // undefined
-        name: newUser?.name,
-        email: newUser?.email,
-      },
-      env.JWT_SECRET!,
-      {
-        expiresIn: env.JWT_EXPIRES as StringValue,
-      },
-    );
+    const { user, token } = await signUpService(name, email, password);
 
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: 'User Created Successfully',
       token,
       data: {
-        name: newUser?.name,
-        email: newUser?.email,
+        name: user?.name,
+        email: user?.email,
       },
     });
   } catch (error) {
@@ -67,44 +24,19 @@ const signUpController = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-const loginController = async (req: Request, res: Response, next: NextFunction) => {
+export const loginController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = await validation(LoginSchema, req.body);
 
-    const [userExists] = await findEmail(email)
-
-    if (!userExists) {
-      throw new AppError('Invalid Credentials', StatusCodes.UNAUTHORIZED);
-    }
-
-    const isPasswordCompared = await verifyPassword(userExists.password)
-
-    if (!isPasswordCompared) {
-      throw new AppError('Invalid Credentials', StatusCodes.UNAUTHORIZED);
-    }
-
-    // Access Tokens
-    // Refresh Tokens
-
-    const token = jwt.sign(
-      {
-        id: userExists?.id, // undefined
-        name: userExists?.name,
-        email: userExists?.email,
-      },
-      env.JWT_SECRET!,
-      {
-        expiresIn: env.JWT_EXPIRES as StringValue,
-      },
-    );
+    const { user, token } = await loginService(email, password);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: 'User Loggedin Successfully',
       token,
       data: {
-        name: userExists?.name,
-        email: userExists?.email,
+        name: user?.name,
+        email: user?.email,
       },
     });
   } catch (error) {
