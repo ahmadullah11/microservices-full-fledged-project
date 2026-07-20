@@ -1,4 +1,4 @@
-# Project Name
+# microservices-full-fledged-project
 
 A professional-grade application built with modern development standards, including strict code quality enforcement using ESLint.
 
